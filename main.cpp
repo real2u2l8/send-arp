@@ -1,3 +1,10 @@
+/*
+*	ip, mac은 Mac, Ip 클래스를 사용해 선언 해 주자. (함수에서의 인자값, 리턴값도 이걸로 사용하자.)
+*	키벨류로 값 비교를 많이 하기때문에 string이 아니라 꼭 몇 바이트 몇 바이트 확인하자 그게 빠르다
+*	
+*
+*/
+
 #include <cstdio>
 #include <pcap.h>
 #include <sys/socket.h>
@@ -18,7 +25,7 @@ struct EthArpPacket final { //Ethernet - Arp 구조체 선언
 #pragma pack(pop)
 
 struct ifreq ifr;
-u_char* attacker_mac;
+uint8_t* attacker_mac;
 char* attacker_ip;
 
 void usage() { //usage
@@ -34,7 +41,7 @@ void getAttackerMac(char* dev){ //attacker의 mac 주소 알아내는 함수
 	strncpy(ifr.ifr_name , dev , IFNAMSIZ - 1);
 
 	ioctl(sock_d, SIOCGIFHWADDR, &ifr);
-	attacker_mac = (u_char *)ifr.ifr_hwaddr.sa_data;		
+	attacker_mac = (uint8_t *)ifr.ifr_hwaddr.sa_data;		
 }
 
 void getAttackerIP(char* dev){ //attacker의 ip 주소 알아내는 함수
@@ -45,7 +52,6 @@ void getAttackerIP(char* dev){ //attacker의 ip 주소 알아내는 함수
 	ioctl(sock_d, SIOCGIFADDR, &ifr);
 	attacker_ip = inet_ntoa(((struct sockaddr_in* )&ifr.ifr_addr)->sin_addr);
 }
-
 void sendArpRequest(char* dev, pcap_t* handle, uint32_t sender_ip){ //sender ip의 맥주소 알아내는 arp 전
 	EthArpPacket packet; //이더넷, arp 패킷 구조를 선언 
 	/*arp request 패킷 구조 만듥기*/
@@ -101,7 +107,7 @@ int main(int argc, char* argv[]) {
 	}
 	uint32_t sender_ip = inet_addr(argv[2]);
 	uint32_t target_ip = inet_addr(argv[3]);
-	u_char* sender_mac;
+	uint8_t* sender_mac;
 
 
 	char* dev = argv[1];
@@ -137,7 +143,7 @@ int main(int argc, char* argv[]) {
 		if(recv_reply_packet->arp_.sip_ != Ip(sender_ip)){ // senderip 가 target ip 가아니면 처음부터 
 			continue;
 		}
-		sender_mac = (u_char*)(recv_reply_packet->eth_.smac());
+		sender_mac = (uint8_t*)(recv_reply_packet->eth_.smac());
 		break;
 	}
 	
