@@ -1,5 +1,5 @@
+#include "pch.h"
 #include "ip.h"
-#include <cstdio>
 
 Ip::Ip(const std::string r) {
 	unsigned int a, b, c, d;
