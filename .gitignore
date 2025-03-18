@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/c++,visualstudiocode,git
 # Edit at https://www.toptal.com/developers/gitignore?templates=c++,visualstudiocode,git
 send-arp
+
+### Cmake
+*.user
 ### C++ ###
 # Prerequisites
 *.d
@@ -31,6 +34,7 @@ send-arp
 *.lib
 
 # Executables
+build/
 *.exe
 *.out
 *.app
