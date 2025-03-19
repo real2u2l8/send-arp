@@ -14,8 +14,8 @@ struct EthArpPacket final {
 
 //전역변수
 struct ifreq interface_req;           // 네트워크 인터페이스 정보를 저장하기 위한 구조체
-uint8_t* attacker_mac;      // 공격자의 MAC 주소를 저장할 포인터 6byte
-char* attacker_ip;          // 공격자의 IP 주소를 저장할 포인터
+uint8_t* attacker_mac;      // 공격자의 MAC 주소를 저장할 포인터 6byte // 자료구조 바꾸자 예쁘게
+char* attacker_ip;          // 공격자의 IP 주소를 저장할 포인터 4byte // 자료구조 예쁘게 
 // 해당 전역변수는 들어오는 반환값에 따라 예쁘게 자료구조 정리 필요 + 전역이 아닌 다른 방식으로 예쁘게 처리해보기.
 
 struct ArpPair {
