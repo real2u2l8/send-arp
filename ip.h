@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 struct Ip final {
 	static const int SIZE = 4;
 

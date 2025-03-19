@@ -10,4 +10,5 @@
 #include <cstdint>     // 정수 타입 정의 확장
 #include <string>
 #include <vector>
-//#include <arpa/inet.h>
+#include <cstdint>
+#include <arpa/inet.h>
