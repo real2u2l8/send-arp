@@ -3,6 +3,23 @@
 #include "mac.h"
 #include "ip.h"
 
+/**
+ * @brief ARP(Address Resolution Protocol) 헤더 구조체
+ * @details 
+ * ARP 프로토콜의 헤더를 나타내는 구조체입니다.
+ * 네트워크 상에서 IP 주소를 물리적인 MAC 주소로 대응(매핑)시키기 위해 사용됩니다.
+ * 
+ * 주요 필드:
+ * - hrd_: 하드웨어 타입 (이더넷 등)
+ * - pro_: 프로토콜 타입
+ * - hln_: 하드웨어 주소 길이 (MAC의 경우 6)
+ * - pln_: 프로토콜 주소 길이 (IPv4의 경우 4)
+ * - op_: Operation 코드 (요청/응답 등)
+ * - smac_: 출발지 MAC 주소
+ * - sip_: 출발지 IP 주소
+ * - tmac_: 목적지 MAC 주소
+ * - tip_: 목적지 IP 주소
+ */
 #pragma pack(push, 1)
 struct ArpHdr final {
 	uint16_t hrd_;

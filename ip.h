@@ -1,5 +1,13 @@
 #pragma once
 
+/**
+ * @brief IP 주소 구조체
+ * @details
+ * IP 주소를 나타내는 구조체입니다.
+ * 
+ * 주요 필드:
+ * - ip_: 4바이트의 IP 주소 배열
+ */
 struct Ip final {
 	static const int SIZE = 4;
 
