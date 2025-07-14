@@ -1,8 +1,8 @@
 /**
  * @file main.cpp
  * @brief ARP Spoofing 공격을 수행하는 메인 프로그램
- * @author 작성자명
- * @date 2024-01
+ * @author real.hansy
+ * @date 2025-07
  * @version 1.0
  * 
  * @details
