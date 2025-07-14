@@ -2,12 +2,12 @@
 #include "ip.h"
 
 /**
- * @brief IP ÁÖ¼Ò ¹®ÀÚ¿­À» ÆÄ½ÌÇÏ¿© IP °´Ã¼¸¦ »ý¼ºÇÏ´Â »ý¼ºÀÚ
- * @param r "xxx.xxx.xxx.xxx" Çü½ÄÀÇ IP ÁÖ¼Ò ¹®ÀÚ¿­
+ * @brief IP ì£¼ì†Œ ë¬¸ìžì—´ì„ íŒŒì‹±í•˜ì—¬ IP ê°ì²´ë¥¼ ìƒì„±í•˜ëŠ” ìƒì„±ìž
+ * @param r "xxx.xxx.xxx.xxx" í˜•ì‹ì˜ IP ì£¼ì†Œ ë¬¸ìžì—´
  * @details
- * ÀÔ·ÂµÈ ¹®ÀÚ¿­À» ÆÄ½ÌÇÏ¿© 4°³ÀÇ ¿ÁÅÝÀ¸·Î ºÐ¸®ÇÏ°í
- * 32ºñÆ® Á¤¼öÇüÀ¸·Î º¯È¯ÇÏ¿© ip_ ¸â¹ö º¯¼ö¿¡ ÀúÀåÇÕ´Ï´Ù.
- * ÆÄ½Ì¿¡ ½ÇÆÐÇÒ °æ¿ì ¿¡·¯ ¸Þ½ÃÁö¸¦ Ãâ·ÂÇÕ´Ï´Ù.
+ * ìž…ë ¥ëœ ë¬¸ìžì—´ì„ íŒŒì‹±í•˜ì—¬ 4ê°œì˜ ì˜¥í…Ÿìœ¼ë¡œ ë¶„ë¦¬í•˜ê³ 
+ * 32ë¹„íŠ¸ ì •ìˆ˜í˜•ìœ¼ë¡œ ë³€í™˜í•˜ì—¬ ip_ ë©¤ë²„ ë³€ìˆ˜ì— ì €ìž¥í•©ë‹ˆë‹¤.
+ * íŒŒì‹±ì— ì‹¤íŒ¨í•  ê²½ìš° ì—ëŸ¬ ë©”ì‹œì§€ë¥¼ ì¶œë ¥í•©ë‹ˆë‹¤.
  */
 Ip::Ip(const std::string r) {
 	unsigned int a, b, c, d;
@@ -20,11 +20,11 @@ Ip::Ip(const std::string r) {
 }
 
 /**
- * @brief IP °´Ã¼¸¦ ¹®ÀÚ¿­·Î º¯È¯ÇÏ´Â ¿¬»êÀÚ
- * @return "xxx.xxx.xxx.xxx" Çü½ÄÀÇ IP ÁÖ¼Ò ¹®ÀÚ¿­
+ * @brief IP ê°ì²´ë¥¼ ë¬¸ìžì—´ë¡œ ë³€í™˜í•˜ëŠ” ì—°ì‚°ìž
+ * @return "xxx.xxx.xxx.xxx" í˜•ì‹ì˜ IP ì£¼ì†Œ ë¬¸ìžì—´
  * @details
- * ³»ºÎ ip_ °ªÀ» 4°³ÀÇ ¿ÁÅÝÀ¸·Î ºÐ¸®ÇÏ¿©
- * Á¡(.)À¸·Î ±¸ºÐµÈ ¹®ÀÚ¿­ Çü½ÄÀ¸·Î º¯È¯ÇÕ´Ï´Ù.
+ * ë‚´ë¶€ ip_ ê°’ì„ 4ê°œì˜ ì˜¥í…Ÿìœ¼ë¡œ ë¶„ë¦¬í•˜ì—¬
+ * ì (.)ìœ¼ë¡œ êµ¬ë¶„ëœ ë¬¸ìžì—´ í˜•ì‹ìœ¼ë¡œ ë³€í™˜í•©ë‹ˆë‹¤.
  */
 Ip::operator std::string() const {
 	char buf[32]; // enough size
@@ -40,10 +40,10 @@ Ip::operator std::string() const {
 #include <gtest/gtest.h>
 
 /**
- * @brief IP Å¬·¡½ºÀÇ »ý¼ºÀÚ Å×½ºÆ®
+ * @brief IP í´ëž˜ìŠ¤ì˜ ìƒì„±ìž í…ŒìŠ¤íŠ¸
  * @details
- * ±âº» »ý¼ºÀÚ, uint32_t »ý¼ºÀÚ, ¹®ÀÚ¿­ »ý¼ºÀÚ¸¦ Å×½ºÆ®ÇÕ´Ï´Ù.
- * ¼­·Î ´Ù¸¥ ¹æ½ÄÀ¸·Î »ý¼ºµÈ µ¿ÀÏÇÑ IP ÁÖ¼ÒÀÇ °´Ã¼¸¦ ºñ±³ÇÕ´Ï´Ù.
+ * ê¸°ë³¸ ìƒì„±ìž, uint32_t ìƒì„±ìž, ë¬¸ìžì—´ ìƒì„±ìžë¥¼ í…ŒìŠ¤íŠ¸í•©ë‹ˆë‹¤.
+ * ì„œë¡œ ë‹¤ë¥¸ ë°©ì‹ìœ¼ë¡œ ìƒì„±ëœ ë™ì¼í•œ IP ì£¼ì†Œì˜ ê°ì²´ë¥¼ ë¹„êµí•©ë‹ˆë‹¤.
  */
 TEST(Ip, ctorTest) {
 	Ip ip1; // Ip()
@@ -56,10 +56,10 @@ TEST(Ip, ctorTest) {
 }
 
 /**
- * @brief IP Å¬·¡½ºÀÇ Çüº¯È¯ ¿¬»êÀÚ Å×½ºÆ®
+ * @brief IP í´ëž˜ìŠ¤ì˜ í˜•ë³€í™˜ ì—°ì‚°ìž í…ŒìŠ¤íŠ¸
  * @details
- * IP °´Ã¼¸¦ uint32_t¿Í stringÀ¸·Î º¯È¯ÇÏ´Â ±â´ÉÀ» Å×½ºÆ®ÇÕ´Ï´Ù.
- * º¯È¯µÈ °ªÀÌ ¿¹»óÇÑ °ª°ú ÀÏÄ¡ÇÏ´ÂÁö È®ÀÎÇÕ´Ï´Ù.
+ * IP ê°ì²´ë¥¼ uint32_tì™€ stringìœ¼ë¡œ ë³€í™˜í•˜ëŠ” ê¸°ëŠ¥ì„ í…ŒìŠ¤íŠ¸í•©ë‹ˆë‹¤.
+ * ë³€í™˜ëœ ê°’ì´ ì˜ˆìƒí•œ ê°’ê³¼ ì¼ì¹˜í•˜ëŠ”ì§€ í™•ì¸í•©ë‹ˆë‹¤.
  */
 TEST(Ip, castingTest) {
 	Ip ip("127.0.0.1");

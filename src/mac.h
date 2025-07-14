@@ -1,12 +1,12 @@
 #pragma once
 
 /**
- * @brief MAC �ּ� ����ü
+ * @brief MAC 주소 구조체
  * @details
- * ��Ʈ��ũ ��ſ��� ������ �ּҸ� ��Ÿ���� ����ü�Դϴ�.
+ * 네트워크 통신에서 물리적 주소를 나타내는 구조체입니다.
  * 
- * �ֿ� �ʵ�:
- * - mac_: 6����Ʈ�� MAC �ּ� �迭
+ * 주요 필드:
+ * - mac_: 6바이트의 MAC 주소 배열
  */
 struct Mac final {
 	static constexpr int SIZE = 6;

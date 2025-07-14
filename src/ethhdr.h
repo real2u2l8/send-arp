@@ -2,15 +2,15 @@
 
 #include "mac.h"
 /**
- * @brief ÀÌ´õ³Ý(Ethernet) Çì´õ ±¸Á¶Ã¼
+ * @brief ì´ë”ë„·(Ethernet) í—¤ë” êµ¬ì¡°ì²´
  * @details 
- * ÀÌ´õ³Ý ÇÁ·¹ÀÓÀÇ Çì´õ¸¦ ³ªÅ¸³»´Â ±¸Á¶Ã¼ÀÔ´Ï´Ù.
- * µ¥ÀÌÅÍ ¸µÅ© °èÃþ¿¡¼­ MAC ÁÖ¼Ò¸¦ ±â¹ÝÀ¸·Î Åë½ÅÇÏ±â À§ÇØ »ç¿ëµË´Ï´Ù.
+ * ì´ë”ë„· í”„ë ˆìž„ì˜ í—¤ë”ë¥¼ ë‚˜íƒ€ë‚´ëŠ” êµ¬ì¡°ì²´ìž…ë‹ˆë‹¤.
+ * ë°ì´í„° ë§í¬ ê³„ì¸µì—ì„œ MAC ì£¼ì†Œë¥¼ ê¸°ë°˜ìœ¼ë¡œ í†µì‹ í•˜ê¸° ìœ„í•´ ì‚¬ìš©ë©ë‹ˆë‹¤.
  * 
- * ÁÖ¿ä ÇÊµå:
- * - dmac_: ¸ñÀûÁö MAC ÁÖ¼Ò 
- * - smac_: Ãâ¹ßÁö MAC ÁÖ¼Ò
- * - type_: »óÀ§ °èÃþ ÇÁ·ÎÅäÄÝ Å¸ÀÔ (IPv4, ARP, IPv6 µî)
+ * ì£¼ìš” í•„ë“œ:
+ * - dmac_: ëª©ì ì§€ MAC ì£¼ì†Œ 
+ * - smac_: ì¶œë°œì§€ MAC ì£¼ì†Œ
+ * - type_: ìƒìœ„ ê³„ì¸µ í”„ë¡œí† ì½œ íƒ€ìž… (IPv4, ARP, IPv6 ë“±)
  */
 
 #pragma pack(push, 1)

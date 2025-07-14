@@ -4,21 +4,21 @@
 #include "ip.h"
 
 /**
- * @brief ARP(Address Resolution Protocol) Çì´õ ±¸Á¶Ã¼
+ * @brief ARP(Address Resolution Protocol) í—¤ë” êµ¬ì¡°ì²´
  * @details 
- * ARP ÇÁ·ÎÅäÄÝÀÇ Çì´õ¸¦ ³ªÅ¸³»´Â ±¸Á¶Ã¼ÀÔ´Ï´Ù.
- * ³×Æ®¿öÅ© »ó¿¡¼­ IP ÁÖ¼Ò¸¦ ¹°¸®ÀûÀÎ MAC ÁÖ¼Ò·Î ´ëÀÀ(¸ÅÇÎ)½ÃÅ°±â À§ÇØ »ç¿ëµË´Ï´Ù.
+ * ARP í”„ë¡œí† ì½œì˜ í—¤ë”ë¥¼ ë‚˜íƒ€ë‚´ëŠ” êµ¬ì¡°ì²´ìž…ë‹ˆë‹¤.
+ * ë„¤íŠ¸ì›Œí¬ ìƒì—ì„œ IP ì£¼ì†Œë¥¼ ë¬¼ë¦¬ì ì¸ MAC ì£¼ì†Œë¡œ ëŒ€ì‘(ë§¤í•‘)ì‹œí‚¤ê¸° ìœ„í•´ ì‚¬ìš©ë©ë‹ˆë‹¤.
  * 
- * ÁÖ¿ä ÇÊµå:
- * - hrd_: ÇÏµå¿þ¾î Å¸ÀÔ (ÀÌ´õ³Ý µî)
- * - pro_: ÇÁ·ÎÅäÄÝ Å¸ÀÔ
- * - hln_: ÇÏµå¿þ¾î ÁÖ¼Ò ±æÀÌ (MACÀÇ °æ¿ì 6)
- * - pln_: ÇÁ·ÎÅäÄÝ ÁÖ¼Ò ±æÀÌ (IPv4ÀÇ °æ¿ì 4)
- * - op_: Operation ÄÚµå (¿äÃ»/ÀÀ´ä µî)
- * - smac_: Ãâ¹ßÁö MAC ÁÖ¼Ò
- * - sip_: Ãâ¹ßÁö IP ÁÖ¼Ò
- * - tmac_: ¸ñÀûÁö MAC ÁÖ¼Ò
- * - tip_: ¸ñÀûÁö IP ÁÖ¼Ò
+ * ì£¼ìš” í•„ë“œ:
+ * - hrd_: í•˜ë“œì›¨ì–´ íƒ€ìž… (ì´ë”ë„· ë“±)
+ * - pro_: í”„ë¡œí† ì½œ íƒ€ìž…
+ * - hln_: í•˜ë“œì›¨ì–´ ì£¼ì†Œ ê¸¸ì´ (MACì˜ ê²½ìš° 6)
+ * - pln_: í”„ë¡œí† ì½œ ì£¼ì†Œ ê¸¸ì´ (IPv4ì˜ ê²½ìš° 4)
+ * - op_: Operation ì½”ë“œ (ìš”ì²­/ì‘ë‹µ ë“±)
+ * - smac_: ì¶œë°œì§€ MAC ì£¼ì†Œ
+ * - sip_: ì¶œë°œì§€ IP ì£¼ì†Œ
+ * - tmac_: ëª©ì ì§€ MAC ì£¼ì†Œ
+ * - tip_: ëª©ì ì§€ IP ì£¼ì†Œ
  */
 #pragma pack(push, 1)
 struct ArpHdr final {
