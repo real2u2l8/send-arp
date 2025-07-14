@@ -6,23 +6,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # PCH 설정
 set(CMAKE_PCH_ENABLED ON)
-set(CMAKE_PCH_FILE "pch.h")
+set(CMAKE_PCH_FILE "src/pch.h")
 
 add_executable(send-arp
-    main.cpp
-    pch.cpp
-    pch.h
-    arphdr.cpp
-    arphdr.h
-    ethhdr.cpp
-    ethhdr.h
-    ip.cpp
-    ip.h
-    mac.cpp
-    mac.h
+    src/main.cpp
+    src/pch.cpp
+    src/pch.h
+    src/arphdr.cpp
+    src/arphdr.h
+    src/ethhdr.cpp
+    src/ethhdr.h
+    src/ip.cpp
+    src/ip.h
+    src/mac.cpp
+    src/mac.h
 )
 
-target_precompile_headers(send-arp PRIVATE pch.h)
+target_precompile_headers(send-arp PRIVATE src/pch.h)
 
 include(GNUInstallDirs)
 install(TARGETS send-arp
